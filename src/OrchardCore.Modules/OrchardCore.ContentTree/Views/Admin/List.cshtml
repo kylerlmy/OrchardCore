@@ -1,0 +1,10 @@
+<script asp-src="/OrchardCore.ContentTree/Scripts/content-tree.js" asp-name="content-tree" at="Foot" depends-on="admin, vuejs"></script>
+<style asp-src="/OrchardCore.ContentTree/Styles/content-tree.min.css" debug-src="/OrchardCore.ContentTree/Styles/content-tree.css"></style>
+<style asp-src="/OrchardCore.Media/Styles/media.min.css" debug-src="/OrchardCore.Media/Styles/media.css"></style>
+<script asp-src="https://vuejs.org/js/vue.min.js" debug-src="https://vuejs.org/js/vue.js" asp-name="vuejs" at="Foot"></script>
+
+<h1>@RenderTitleSegments(T["Content Browser"])</h1>
+
+<div id="content-tree">
+    <p>{{ message }} ..</p>
+</div>
