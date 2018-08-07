@@ -3,3 +3,74 @@
 ** Any changes made directly to this file will be overwritten next time its asset group is processed by Gulp.
 */
 
+html, body, .ta-wrapper {
+  height: 100%;
+  margin-bottom: 0px;
+  overflow: auto; }
+
+.ta-content {
+  height: calc(100% - 59px);
+  margin-bottom: 0px; }
+
+h1.ocf {
+  font-size: 1.5rem;
+  font-weight: normal;
+  height: 42px; }
+
+#content-tree-left-bar {
+  border-right: 1px solid rgba(0, 0, 0, 0.1);
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  width: 260px; }
+
+#providers-tree {
+  list-style: none;
+  padding-left: 0;
+  overflow: hidden; }
+  #providers-tree .treeroot {
+    font-weight: 600;
+    height: 40px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1); }
+    #providers-tree .treeroot a {
+      font-size: 1rem !important; }
+    #providers-tree .treeroot .expand {
+      font-size: 0.875rem;
+      padding: 0; }
+  #providers-tree li.selected > div:not(.treeroot) {
+    font-weight: bold;
+    background-color: #e6f2ff; }
+  #providers-tree li div:not(.treeroot) a:hover, #providers-tree .folderhovered {
+    background-color: #e6f2ff; }
+  #providers-tree li div {
+    height: 40px;
+    padding: 0;
+    font-size: 0.875rem; }
+    #providers-tree li div a {
+      display: block;
+      padding-top: 8px;
+      height: 100%; }
+  #providers-tree div {
+    /*padding: 0.2rem 0.2rem;*/ }
+    #providers-tree div a {
+      color: #495057;
+      text-decoration: none; }
+  #providers-tree ol {
+    padding-left: 0; }
+  #providers-tree .folder {
+    color: lightgray; }
+  #providers-tree li {
+    list-style: none; }
+  #providers-tree .expand {
+    /* make both icons be in the center as their widths are different */
+    text-align: center;
+    width: 16px;
+    cursor: pointer;
+    font-size: 0.625rem;
+    display: inline-block;
+    padding: 12px 6px 12px 6px;
+    margin-top: -12px; }
+  #providers-tree .opened svg {
+    transform: rotate(90deg);
+    -webkit-transform: rotate(90deg); }
+  #providers-tree .empty {
+    transform: none;
+    visibility: hidden; }

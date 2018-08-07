@@ -1,1 +1,8 @@
-// import file here 
+// import file here // variables
+@import "variables.scss"; 
+
+// shared
+@import "main-layout.scss";
+
+// components
+@import "tree-node.scss";

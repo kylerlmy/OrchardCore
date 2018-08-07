@@ -1,7 +1,10 @@
 using System;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
+using OrchardCore.ContentTree.Services;
 using OrchardCore.Environment.Navigation;
 using OrchardCore.Modules;
 using OrchardCore.Security.Permissions;
@@ -14,6 +17,9 @@ namespace OrchardCore.ContentTree
         {
             services.AddScoped<IPermissionProvider, Permissions>();
             services.AddScoped<INavigationProvider, AdminMenu>();
+            services.AddScoped<ITreeNodeProvider, ContentTreeNodeProvider>();
+            services.AddSingleton<IUrlHelperFactory, UrlHelperFactory>();
+            services.AddSingleton<IActionContextAccessor, ActionContextAccessor>();
 
         }
 
