@@ -1,3 +1,14 @@
+@* todo: think if it is better to reuse the viewmodels in OrchardCore.Contents *@
+@using OrchardCore.ContentTree.ViewModels
+
+@{
+    var colCheckboxWidth = 40;
+    var colTitleWidth = 300;
+    var colTypeWidth = 200;
+    var colStatusWidth = 120;
+    var colOwnerAuthorWidth = 100;
+    var colDateWidth = 120;
+}
 <script asp-src="/OrchardCore.ContentTree/Scripts/content-tree.js" asp-name="content-tree" at="Foot" depends-on="admin, vuejs, sortable, vuedraggable"></script>
 <style asp-src="/OrchardCore.ContentTree/Styles/content-tree.min.css" debug-src="/OrchardCore.ContentTree/Styles/content-tree.css"></style>
 <style asp-src="/OrchardCore.Media/Styles/media.min.css" debug-src="/OrchardCore.Media/Styles/media.css"></style>
@@ -7,10 +18,12 @@
 <script asp-src="https://cdnjs.cloudflare.com/ajax/libs/Vue.Draggable/2.14.1/vuedraggable.min.js" debug-src="https://cdnjs.cloudflare.com/ajax/libs/Vue.Draggable/2.14.1/vuedraggable.js" asp-name="vuedraggable" depends-on="vuejs, sortable" at="Foot"></script>
 
 
-<div class="d-flex flex-column" style="border:  8px orange; height:100%;">
+<div id="content-tree" class="d-flex flex-column" style="border:  8px orange; height:100%;">
+    <global-notifications></global-notifications>
     <h1 class="ocf" style="border:  2px yellow;">@RenderTitleSegments(T["Content Browser"])</h1>
-
-    <div class="d-flex flex-row flex-grow-1" id="content-tree" style="border: 8px red; height:100%;">
+    
+    
+    <div class="d-flex flex-row flex-grow-1" style="border: 8px red; height:100%;">
         <div id="content-tree-left-bar">
             <ol id="providers-tree" v-cloak>
                 <li v-for="p in providers">
@@ -18,29 +31,111 @@
                     </tree-node>
                 </li>
             </ol>
-
         </div>
         <div id="content-tree-content-area"
              class="flex-grow-1"
-             style="border:  4px green;">
-            <p>content area</p>
-            <p>{{ message }} ..</p>
+             style="border:  1px green;">
+            <h6 class="current-node-title" v-cloak >{{ currentNode.title }}</h6>
+            <filter-box></filter-box>
+            <div>
+                <div class="list-header">
+                    <div class="list-col list-col-checkbox" style="width:@(colCheckboxWidth)px;"><input type="checkbox" /></div>
+                    <div class="list-col content-item-title" style="width:@(colTitleWidth)px;">@T["Title"]</div>
+                    <div class="list-col" style="width:@(colTypeWidth)px;">@T["Type"]</div>
+                    <div class="list-col" style="width:@(colStatusWidth)px;">@T["Status"]</div>
+                    <div class="list-col" style="width:@(colOwnerAuthorWidth)px;">@T["Owner"]</div>
+                    <div class="list-col" style="width:@(colOwnerAuthorWidth)px;">@T["Author"]</div>
+                    <div class="list-col" style="width:@(colDateWidth)px;" v-on:click="changeSort('@ContentsOrder.Created.ToString()')">
+                        @T["Created"]
+                        <column-sorter colname="@ContentsOrder.Created.ToString()" :selectedcolname="sortBy" :asc="sortAsc"></column-sorter>
+                    </div>
+                    <div class="list-col" style="width:@(colDateWidth)px;" v-on:click="changeSort('@ContentsOrder.Modified.ToString()')">
+                        @T["Modified"]
+                        <column-sorter colname="@ContentsOrder.Modified.ToString()" :selectedcolname="sortBy" :asc="sortAsc"></column-sorter>
+                    </div>
+                    <div class="list-col" style="width:@(colDateWidth)px;" v-on:click="changeSort('@ContentsOrder.Published.ToString()')">
+                        @T["Published"]
+                        <column-sorter colname="@ContentsOrder.Published.ToString()" :selectedcolname="sortBy" :asc="sortAsc"></column-sorter>
+                    </div>
+                </div>
+                <div id="content-items-list-body">
+                    <div v-for="ci in contentItems" :key="ci.contentItemId" class="list-row">
+                        <div class="list-col list-col-checkbox" style="width:@(colCheckboxWidth)px;"><input type="checkbox" :value="ci.Id" name="itemIds" /></div>
+                        <div class="list-col content-item-title" style="width:@(colTitleWidth)px;">
+                            <div class="mr-auto">
+                                <a :href="ci.editUrl"
+                                   style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block; max-width:@(colTitleWidth - 50)px ">
+                                    {{ ci.displayText }}
+                                </a>
+                            </div>
+
+                            @*@if (contentItemSummary.Actions != null)
+                        {
+                            @await DisplayAsync(contentItemSummary.Actions)
+                        }*@
+                        </div>
+                        <div class="list-col" style="width:@(colTypeWidth)px;">
+                            {{ ci.contentType }}
+                        </div>
+                        <div class="list-col statusclass" style="width:@(colStatusWidth)px;">
+                            <content-status-display :status="ci.status"></content-status-display>
+                        </div>
+                        <div class="list-col" style="width:@(colOwnerAuthorWidth)px;">
+                            {{ ci.owner }}
+                            @*@contentItemSummary.ContentItem.Owner*@
+                        </div>
+                        <div class="list-col" style="width:@(colOwnerAuthorWidth)px;">
+                            {{ ci.author}}
+                            @*@contentItemSummary.ContentItem.Author*@
+                        </div>
+                        <div class="list-col" style="width:@(colDateWidth)px;">
+                            {{ ci.createdUtc}}
+                            @*@(await DisplayAsync(await New.TimeSpan(Utc: contentItemSummary.ContentItem.CreatedUtc)))*@
+                        </div>
+                        <div class="list-col" style="width:@(colDateWidth)px;">
+                            {{ ci.modifiedUtc}}
+                            @*@(await DisplayAsync(await New.TimeSpan(Utc: contentItemSummary.ContentItem.CreatedUtc)))*@
+                        </div>
+                        <div class="list-col" style="width:@(colDateWidth)px;">
+                            {{ ci.publishedUtc}}
+                            @*@(await DisplayAsync(await New.TimeSpan(Utc: contentItemSummary.ContentItem.CreatedUtc)))*@
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div v-show="noResults" class="no-results alert alert-info">
+                @T["No result found."]
+            </div>
+            @*<p v-for="ci in contentItems">{{ ci }} </p>*@
         </div>
     </div>
 </div>
 
 
-
-
-@* Endpoints *@
-<input type="hidden" id="GetTreeNodeProvidersUrl" value="@Url.Action("GetTreeNodeProviders", "Admin", new { area = "OrchardCore.ContentTree" })" />
-<input type="hidden" id="GetChildrenUrl" value="@Url.Action("GetChildren", "Admin", new { area = "OrchardCore.ContentTree" })" />
-<input type="hidden" id="GetContentItemsUrl" value="@Url.Action("GetContentItems", "Admin", new { area = "OrchardCore.ContentTree" })" />
-@*<input type="hidden" id="deleteFolderUrl" value="@Url.Action("DeleteFolder", "Admin", new { area = "OrchardCore.Media" })" />
-    <input type="hidden" id="createFolderUrl" value="@Url.Action("CreateFolder", "Admin", new { area = "OrchardCore.Media" })" />
-    <input type="hidden" id="getMediaItemsUrl" value="@Url.Action("GetMediaItems", "Admin", new { area = "OrchardCore.Media" })" />
-    <input type="hidden" id="deleteMediaUrl" value="@Url.Action("DeleteMedia", "Admin", new { area = "OrchardCore.Media" })" />
-    <input type="hidden" id="renameMediaUrl" value="@Url.Action("MoveMedia", "Admin", new { area = "OrchardCore.Media" })" />
-    <input type="hidden" id="deleteMediaListUrl" value="@Url.Action("DeleteMediaList", "Admin", new { area = "OrchardCore.Media" })" />
-    <input type="hidden" id="moveMediaListUrl" value="@Url.Action("MoveMediaList", "Admin", new { area = "OrchardCore.Media" })" />
-    <input type="hidden" id="uploadFiles" value="@Url.Action("Upload", "Admin", new { area = "OrchardCore.Media" })" />*@
+@* Passing vars from server to client *@
+<script type="text/javascript">
+    var content_tree = {
+        res: {
+            contentStatusLabelText: "@T["Show"]",
+            ownedByMeLabelText: "@T["Owned by me"]"
+        },
+        GetTreeNodeProvidersUrl: "@(Url.Action("GetTreeNodeProviders", "Admin", new { area = "OrchardCore.ContentTree" }))",
+        GetChildrenUrl: "@Url.Action("GetChildren", "Admin", new { area = "OrchardCore.ContentTree" })",
+        GetContentItemsUrl: "@Url.Action("GetContentItems", "Admin", new { area = "OrchardCore.ContentTree" })",
+        returnUrl: "@FullRequestPath",
+        ContentStatusFilterOptions: [
+            { value: "@ContentsStatusFilter.AllVersions.ToString()", text: "@T["all"]" },
+            { value: "@ContentsStatusFilter.Published.ToString()", text: "@T["published"]" },
+            { value: "@ContentsStatusFilter.Draft.ToString()", text: "@T["drafts"]" }
+        ],
+        ContentStatusEnumValues: {
+            @ContentStatus.DraftOnly.ToString() : "@T["draft only"]",
+            @ContentStatus.PublishedOnly.ToString(): "@T["published only"]",
+            @ContentStatus.PublishedWithDraft.ToString(): "@T["published with draft"]"
+        },
+        SortDirections: {
+            asc: "@SortDirection.Ascending.ToString()",
+            desc: "@SortDirection.Descending.ToString()"
+        }
+    }
+</script>

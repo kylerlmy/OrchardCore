@@ -3,15 +3,23 @@
     "generateSourceMaps": false,
     "inputs": [
       "Assets/scss/_variables.scss",
+      "Assets/scss/_global-notifications-component.scss",
       "Assets/scss/_main-layout.scss",
-      "Assets/scss/_tree-node.scss",
+      "Assets/scss/_tree-node-component.scss",
+      "Assets/scss/_filter-box-component.scss",
+      "Assets/scss/_list.scss",
       "Assets/scss/content-tree.scss"
     ],
     "output": "wwwroot/Styles/content-tree.css"
   },
   {
     "inputs": [
-      "Assets/js/*.js"
+      "Assets/js/globalNotificationsComponent.js",
+      "Assets/js/columnSorterComponent.js",
+      "Assets/js/contentStatusDisplayComponent.js",
+      "Assets/js/filterBoxComponent.js",
+      "Assets/js/treeNodeComponent.js",
+      "Assets/js/content-tree.js"
     ],
     "output": "wwwroot/Scripts/content-tree.js"
   }

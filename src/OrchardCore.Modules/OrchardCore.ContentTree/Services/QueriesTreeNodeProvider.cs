@@ -4,11 +4,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Localization;
+using Newtonsoft.Json;
 using OrchardCore.ContentManagement;
 using OrchardCore.ContentManagement.Metadata;
 using OrchardCore.ContentManagement.Metadata.Models;
@@ -16,34 +18,40 @@ using OrchardCore.ContentManagement.Metadata.Settings;
 using OrchardCore.ContentManagement.Records;
 using OrchardCore.ContentTree.Models;
 using OrchardCore.ContentTree.ViewModels;
+using OrchardCore.Queries;
 using YesSql;
 using YesSql.Services;
 
 namespace OrchardCore.ContentTree.Services
 {
-    public class ContentTreeNodeProvider : ITreeNodeProvider
+    public class QueriesTreeNodeProvider : ITreeNodeProvider
     {
         private readonly IContentDefinitionManager _contentDefinitionManager;
         private readonly IContentManager _contentManager;
         private readonly IUrlHelper _urlHelper;
-        private readonly ISession _session;
-        private readonly Microsoft.AspNetCore.Http.IHttpContextAccessor _httpContextAccessor;
+        private readonly YesSql.ISession _session;
         private readonly IAuthorizationService _authorizationService;
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IQueryManager _queryManager;
 
-        public ContentTreeNodeProvider(
+
+        public QueriesTreeNodeProvider(
+            IQueryManager queryManager,
             IContentDefinitionManager contentDefinitionManager,
             IContentManager contentManager,
             IUrlHelperFactory urlHelperFactory,
             IActionContextAccessor actionContextAccessor,
-            ISession session,
+            IHttpContextAccessor httpContextAccesor,
+            YesSql.ISession session,
             IAuthorizationService authorizationService,
-            Microsoft.AspNetCore.Http.IHttpContextAccessor httpContextAccessor,
             IStringLocalizer<ContentTreeNodeProvider> stringLocalizer)
         {
+            _queryManager = queryManager;
+
             _contentDefinitionManager = contentDefinitionManager;
             _contentManager = contentManager;
             _session = session;
-            _httpContextAccessor = httpContextAccessor;
+            _httpContextAccessor = httpContextAccesor;
             _authorizationService = authorizationService;
 
             var ac = actionContextAccessor.ActionContext;
@@ -56,10 +64,11 @@ namespace OrchardCore.ContentTree.Services
         private readonly IStringLocalizer<ContentTreeNodeProvider> T;
 
         // todo: not needed? can we rely on the name and id of the root node?
-        public string Name => T["Content Types"];
-        public string Id => T["content-types"];
+        public string Name => T["Queries"];
+        public string Id => T["queries"];
 
-
+        // todo: make async?
+        // handle authorization: return empty node or throw exception?
         public IEnumerable<TreeNode> GetChildren(string nodeType, string nodeId)
         {
             switch (nodeType)
@@ -68,25 +77,22 @@ namespace OrchardCore.ContentTree.Services
                     return new[] {
                         GetContentTypesNode()
                     };
-                case "content-types":
-                    // todo: see if it would be better to use ".Listable()"
-                    return _contentDefinitionManager.ListTypeDefinitions()
-                        .Where(ctd => ctd.Settings.ToObject<ContentTypeSettings>().Creatable)
-                        .OrderBy(ctd => ctd.DisplayName)
-                        .Select(GetContentTypeNode).ToArray();
+                case "queries":
+                    var result = _queryManager.ListQueriesAsync().Result.Select(GetQueryNode);
+                    return result;
+
             }
 
             return new TreeNode[0];
         }
 
-
-        private TreeNode GetContentTypeNode(ContentTypeDefinition definition)
+        private TreeNode GetQueryNode(Query query)
         {
             return new TreeNode
             {
-                Title = definition.DisplayName,
-                Type = "content-type",
-                Id = definition.Name,
+                Title = query.Name,
+                Type = "query",
+                Id = query.Name,
                 IsLeaf = true,
                 Url = _urlHelper.Action(
                     "GetContentItems", "Admin",
@@ -96,9 +102,9 @@ namespace OrchardCore.ContentTree.Services
                         {"Controller", "Admin"},
                         {"Action", "GetContentItems"},
                         {"providerId", Id  },
-                        {"providerParams[typename]", definition.Name}
+                        {"providerParams[queryName]", query.Name}
                     })
-            };
+            };        
         }
 
         private TreeNode GetContentTypesNode()
@@ -120,30 +126,27 @@ namespace OrchardCore.ContentTree.Services
                 Dictionary<string, string> specificParams, 
                 CommonContentTreeParams commonParams)
         {
-            var query = _session.Query<ContentItem, ContentItemIndex>();
-
-
-            if ((specificParams != null) && (specificParams.ContainsKey("typename")) && (specificParams["typename"] != null))
+            if ((specificParams == null) || (!specificParams.ContainsKey("queryName")) || (specificParams["queryName"] == null))
             {
-                var typeName = specificParams["typename"];
-                var contentTypeDefinition = _contentDefinitionManager.GetTypeDefinition(typeName);
-                if (contentTypeDefinition == null)
-                    throw new System.ArgumentException($"The content type {typeName} does not exist.");
-
-                query = query.With<ContentItemIndex>(x => x.ContentType == typeName);
-            }
-            else
-            {
-                var listableTypes = (await GetListableTypesAsync()).Select(t => t.Name).ToArray();
-                if (listableTypes.Any())
-                {
-                    query = query.With<ContentItemIndex>(x => x.ContentType.IsIn(listableTypes));
-                }
+                return new List<ContentItem>();
             }
 
-            query = ApplyCommonParametersToQuery(query, commonParams);
 
-            return await query.ListAsync();
+            var query = await _queryManager.GetQueryAsync(specificParams["queryName"]);
+
+            if (query == null)
+            {
+                return new List<ContentItem>();
+            }
+
+            if (!await _authorizationService.AuthorizeAsync(_httpContextAccessor.HttpContext.User, OrchardCore.Queries.Permissions.CreatePermissionForQuery(query.Name)))
+            {
+                return new List<ContentItem>();
+            }
+
+            var queryParameters = new Dictionary<string, object>(); // JsonConvert.DeserializeObject<Dictionary<string, object>>(parameters ?? "");
+
+            return await _queryManager.ExecuteQueryAsync(query, queryParameters) as IEnumerable<ContentItem>;
         }
 
 

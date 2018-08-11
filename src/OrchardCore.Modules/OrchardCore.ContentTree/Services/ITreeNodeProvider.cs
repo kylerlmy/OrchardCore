@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using OrchardCore.ContentManagement;
 using OrchardCore.ContentManagement.Records;
 using OrchardCore.ContentTree.Models;
+using OrchardCore.ContentTree.ViewModels;
 using YesSql;
 
 namespace OrchardCore.ContentTree.Services
@@ -15,6 +16,6 @@ namespace OrchardCore.ContentTree.Services
         string Id { get; }
         IEnumerable<TreeNode> GetChildren(string nodeType, string nodeId);
         TreeNode Get(string nodeType, string nodeId);
-        Task<IQuery<ContentItem, ContentItemIndex>> GetBaseQuery(Dictionary<string, string> parameters);
+        Task<IEnumerable<ContentItem>>GetContentItems(Dictionary<string, string> specificParams,CommonContentTreeParams commonParams);
     }
 }

@@ -1,4 +1,4 @@
-// <treenode> component
+// <tree-node> component
 Vue.component('treeNode', {
     template: '\
         <li :class="{selected: isSelected}" >\
@@ -56,72 +56,28 @@ Vue.component('treeNode', {
             }
         },
         select: function () {
-            console.log('selecting: first loadchildren, then call Url if not null');
-            var self = this;
-            bus.$emit('folderSelected', this.model);
-            
             this.loadChildren();
-
-            if (self.model.url) {
-                console.log('calling this urlfff');
-                console.log(self.model.url);
-                $.ajax({
-                    url: self.model.url,
-                    method: 'GET',
-                    success: function (data) {
-                        console.log('children are:');
-                        console.log(data);
-                        //self.children = data;
-                        //self.children.forEach(function (c) {
-                        //    c.parent = self.model;
-                        //});
-                    },
-                    error: function (error) {
-                        emtpy = false;
-                        console.error(error.responseText);
-                    }
-                });
-
-                //$.ajax({
-                //    url: $('#GetChildrenUrl').val() +
-                //        '?parentId=' + encodeURIComponent(self.model.id)
-                //        + '&parentType=' + encodeURIComponent(self.model.type),
-                //    method: 'GET',
-                //    success: function (data) {
-                //        console.log('children are:');
-                //        console.log(data);
-                //        self.children = data;
-                //        //self.children.forEach(function (c) {
-                //        //    c.parent = self.model;
-                //        //});
-                //    },
-                //    error: function (error) {
-                //        emtpy = false;
-                //        console.error(error.responseText);
-                //    }
-                //});
-            } else {
-                console.log('no url on this treenode, no call for content items');
-            }
-            
+            bus.$emit('currentNodeChanged', this.model);           
         },
-        loadChildren: function () {            
+        loadChildren: function () {
             var self = this;
+
+            if (self.model.isLeaf) {                
+                return; // when is leaf there are no children
+            }
+
             if (this.open == false) {
                 this.open = true;
             }
             $.ajax({
-                url: $('#GetChildrenUrl').val() +
+                url: content_tree.GetChildrenUrl +
                     '?parentId=' + encodeURIComponent(self.model.id)
                     + '&parentType=' + encodeURIComponent(self.model.type),
                 method: 'GET',
                 success: function (data) {
-                    console.log('children are:');
-                    console.log(data);
+                    //console.log('children are:');
+                    //console.log(data);
                     self.children = data;
-                    //self.children.forEach(function (c) {
-                    //    c.parent = self.model;
-                    //});
                 },
                 error: function (error) {
                     emtpy = false;

@@ -19,7 +19,11 @@ h1.ocf {
 }
 
 #content-tree-left-bar {
+    min-width: 260px;
     border-right: $normal-border;
     border-top: $normal-border;
-    width: 260px;
+}
+
+.current-node-title {
+    color: $gray-700;
 }

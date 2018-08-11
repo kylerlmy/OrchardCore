@@ -18,6 +18,7 @@ namespace OrchardCore.ContentTree
             services.AddScoped<IPermissionProvider, Permissions>();
             services.AddScoped<INavigationProvider, AdminMenu>();
             services.AddScoped<ITreeNodeProvider, ContentTreeNodeProvider>();
+            services.AddScoped<ITreeNodeProvider, QueriesTreeNodeProvider>();
             services.AddSingleton<IUrlHelperFactory, UrlHelperFactory>();
             services.AddSingleton<IActionContextAccessor, ActionContextAccessor>();
 
