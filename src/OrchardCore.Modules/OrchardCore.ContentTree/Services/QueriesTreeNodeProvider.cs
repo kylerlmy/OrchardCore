@@ -75,7 +75,7 @@ namespace OrchardCore.ContentTree.Services
             {
                 case "root":
                     return new[] {
-                        GetContentTypesNode()
+                        GetQueriesNode()
                     };
                 case "queries":
                     var result = _queryManager.ListQueriesAsync().Result.Select(GetQueryNode);
@@ -107,7 +107,7 @@ namespace OrchardCore.ContentTree.Services
             };        
         }
 
-        private TreeNode GetContentTypesNode()
+        private TreeNode GetQueriesNode()
         {
             return new TreeNode
             {
@@ -121,6 +121,7 @@ namespace OrchardCore.ContentTree.Services
         {
             throw new NotImplementedException("Get is not implemented: ContentTreeNodeProvider");
         }
+
 
         public async Task<IEnumerable<ContentItem>> GetContentItems(
                 Dictionary<string, string> specificParams, 
@@ -146,7 +147,18 @@ namespace OrchardCore.ContentTree.Services
 
             var queryParameters = new Dictionary<string, object>(); // JsonConvert.DeserializeObject<Dictionary<string, object>>(parameters ?? "");
 
-            return await _queryManager.ExecuteQueryAsync(query, queryParameters) as IEnumerable<ContentItem>;
+            var result = new List<ContentItem>();
+            var rawResult =  await _queryManager.ExecuteQueryAsync(query, queryParameters) as IEnumerable<object>;
+
+            foreach (object o in rawResult)
+            {
+                var casted = o as ContentItem;
+                if (casted != null)
+                {
+                    result.Add(casted);
+                }
+            }
+            return result;
         }
 
 
