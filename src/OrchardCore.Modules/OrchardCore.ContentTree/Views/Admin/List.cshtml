@@ -59,11 +59,11 @@
                     </div>
                 </div>
                 <div id="content-items-list-body">
-                    <div v-for="ci in contentItems" :key="ci.contentItemId" class="list-row">
+                    <div v-for="ci in contentItems" :key="ci.contentItemVersionId" class="list-row">
                         <div class="list-col list-col-checkbox" style="width:@(colCheckboxWidth)px;"><input type="checkbox" :value="ci.Id" name="itemIds" /></div>
                         <div class="list-col content-item-title" style="width:@(colTitleWidth)px;">
                             <div class="mr-auto">
-                                <a :href="ci.editUrl"
+                                <a :href="ci.editUrl" :title="ci.contentItemId"
                                    style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block; max-width:@(colTitleWidth - 50)px ">
                                     {{ ci.displayText }}
                                 </a>
