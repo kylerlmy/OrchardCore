@@ -147,17 +147,11 @@ namespace OrchardCore.ContentTree.Services
 
             var queryParameters = new Dictionary<string, object>(); // JsonConvert.DeserializeObject<Dictionary<string, object>>(parameters ?? "");
 
-            var result = new List<ContentItem>();
             var rawResult =  await _queryManager.ExecuteQueryAsync(query, queryParameters) as IEnumerable<object>;
 
-            foreach (object o in rawResult)
-            {
-                var casted = o as ContentItem;
-                if (casted != null)
-                {
-                    result.Add(casted);
-                }
-            }
+            // filtering out what is not a ContentItem
+            var result = rawResult.Where(x => x as ContentItem != null).Select(x => x as ContentItem);
+
             return result;
         }
 
