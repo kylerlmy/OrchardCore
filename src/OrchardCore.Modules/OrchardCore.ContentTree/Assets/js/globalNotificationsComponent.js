@@ -17,13 +17,12 @@ Vue.component('globalNotifications', {
 
         // we expect an ajaxError that has a responseText an object like this https://tools.ietf.org/html/rfc7807        
         bus.$on('ajaxErrorNotificaton', function (ajaxError) {
-            var notification = { isWarning: true };
-
-            if (!ajaxError) {
-                notification.title = 'Error';
-                notification.detail = 'There was an error when calling the server.';
+            var notification = {
+                isWarning: true,
+                title: 'Error',
+                detail: 'There was an error when calling the server.'
             };
-
+            
             try {
                 parsedResponse = JSON.parse(ajaxError.responseText);
                 if (parsedResponse.title) { notification.title = parsedResponse.title; }
