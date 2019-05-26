@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Net.Mail;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
@@ -60,6 +59,12 @@ namespace OrchardCore.Email.Workflows.Activities
             set => SetProperty(value);
         }
 
+        public bool IsBodyHtml
+        {
+            get => GetProperty(() => true);
+            set => SetProperty(value);
+        }
+
         public override IEnumerable<Outcome> GetPossibleOutcomes(WorkflowExecutionContext workflowContext, ActivityContext activityContext)
         {
             return Outcomes(T["Done"], T["Failed"]);
@@ -73,19 +78,18 @@ namespace OrchardCore.Email.Workflows.Activities
             var bodyTask = _expressionEvaluator.EvaluateAsync(Body, workflowContext);
 
             await Task.WhenAll(senderTask, recipientsTask, subjectTask, bodyTask);
-            var sender = !string.IsNullOrWhiteSpace(senderTask.Result) ? senderTask.Result.Trim() : null;
+
             var message = new MailMessage
             {
+                To = recipientsTask.Result.Trim(),
                 Subject = subjectTask.Result.Trim(),
                 Body = bodyTask.Result?.Trim(),
-                IsBodyHtml = true
+                IsBodyHtml = IsBodyHtml
             };
-
-            message.To.Add(recipientsTask.Result.Trim());
 
             if(!string.IsNullOrWhiteSpace(senderTask.Result))
             {
-                message.From = new MailAddress(senderTask.Result.Trim());
+                message.From = senderTask.Result.Trim();
             }
 
             var result = await _smtpService.SendAsync(message);
